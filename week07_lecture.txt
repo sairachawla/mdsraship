@@ -1,0 +1,1686 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "# Week 7 - Testing"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "![](images/testing_banner_01.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Automated vs. Manual Testing\n",
+    "\n",
+    "![](images/human_vs_robot.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "# Automated vs. Manual Testing\n",
+    "\n",
+    "When writing code we often intuitively test a couple of use cases, something known as **exploratory testing**, a form of manual testing. Usually, there is no exhaustive plan, just exploring the options.\n",
+    "\n",
+    "You could think of a list of  \n",
+    "  - all the **features and methods** your code has\n",
+    "  - the different **inputs** it can accept\n",
+    "  - and the **expected results**\n",
+    "\n",
+    "Now, _each time you make a change to your code_, you need to go through every single item on that list and check it.\n",
+    "\n",
+    "Not much fun! Hence the need for automated testing."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Unit Tests vs. Integration Tests\n",
+    "\n",
+    "Suppose your code is an API that calls some results from Google and provides back the URLs of the top results and the (NLP based) sentiment of the text of the web sites.\n",
+    "\n",
+    "An **integration test** of this code would run the API call and see if the Top 10 results coming back are complete (this would be a _test assertion_), provide reasonable sentiment estimates etc. **Testing multiple components** is known as integration testing.\n",
+    "\n",
+    "But suppose the sentiment scores are unexpected or incomplete. What now?\n",
+    "\n",
+    "Ideally, we also have test of each sub-part of our code. Are we able to get 10 results back from Google, can we get text from all these URLs. Do our NLP and sentiment functions work properly ...\n",
+    "\n",
+    "A **unit test** is a smaller test, one that **checks that a single component operates in the expected way**. A unit test helps you to isolate what is broken in your code and fix it faster.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Unit Tests vs. Integration Tests\n",
+    "\n",
+    "![](images/unit-tests-passing-no-integration-tests.jpg)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Choosing a test runner\n",
+    "\n",
+    "There are lots of available **test runners** in Python. \n",
+    "\n",
+    "- `unittest`: built-in standard library. Basic framework for writing, discovering, and running tests in python.\n",
+    "- `nose` and `nose2`: Used to be a very common test runner on python projects because it provided a lot  of functionality missing from python `unittest`. The original nosetests is a mostly inactive project in maintenance mode, and the successor `nose2` is not too popular anymore either.\n",
+    "- `pytest`: by far the most popular python test runner out there. It provides a great user experience, has great integration with lots of editors (e.g. Pycharm) and seems to have the most momentum as a python test runner."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "We will focus on `pytest` in this course.\n",
+    "\n",
+    "![](images/pytest_logo.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "# Writing Unit Tests\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "Suppose we wanted to test our palindrome function below:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def palindrome_detector(s):\n",
+    "    \"\"\"Return True if string, once downcased and\n",
+    "    with spaces removed, is a palindrome, else return False.\"\"\"\n",
+    "    s = s.lower().replace(' ', '')\n",
+    "    return s == s[::-1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "False"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "palindrome_detector('hello')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "True"
+      ]
+     },
+     "execution_count": 18,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "palindrome_detector('Anna')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Writing a test function\n",
+    "\n",
+    "- Unit tests are python functions.\n",
+    "- Name your test function name so that it begins with `test_`. This is a naming convention but some test runners actually pick up all files and functions with that prefix.\n",
+    "- Your test function should contain an **assert statement** comparing the **actual result** with the **expected result**.\n",
+    "\n",
+    "For example, suppose we wanted to test our palindrome function:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_palindrome_detector():\n",
+    "    example = 'Lisa Bonet ate no basil'\n",
+    "    expected = True\n",
+    "    actual = palindrome_detector(example)\n",
+    "    assert actual == expected\n",
+    "\n",
+    "test_palindrome_detector()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "Kind of anti-climactic but no output is good here because that means the assertion was not raised and hence the test passed."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Example: Testing the `sum` function\n",
+    "\n",
+    "Let's test the built-in `sum` function. How would you write two unit tests that ensure that the sum functions works for (1) a list of numbers and (2) a tuple of numbers?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_sum_with_list():\n",
+    "    assert sum([1, 2, 3]) == 6, \"Should be 6\"\n",
+    "\n",
+    "def test_sum_with_tuple():\n",
+    "    assert sum((1, 2, 2)) == 6, \"Should be 6\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [
+    {
+     "ename": "AssertionError",
+     "evalue": "Should be 6",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mAssertionError\u001b[0m                            Traceback (most recent call last)",
+      "Cell \u001b[0;32mIn [21], line 2\u001b[0m\n\u001b[1;32m      1\u001b[0m test_sum_with_list()\n\u001b[0;32m----> 2\u001b[0m \u001b[43mtest_sum_with_tuple\u001b[49m\u001b[43m(\u001b[49m\u001b[43m)\u001b[49m\n",
+      "Cell \u001b[0;32mIn [20], line 5\u001b[0m, in \u001b[0;36mtest_sum_with_tuple\u001b[0;34m()\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[38;5;28;01mdef\u001b[39;00m \u001b[38;5;21mtest_sum_with_tuple\u001b[39m():\n\u001b[0;32m----> 5\u001b[0m     \u001b[38;5;28;01massert\u001b[39;00m \u001b[38;5;28msum\u001b[39m((\u001b[38;5;241m1\u001b[39m, \u001b[38;5;241m2\u001b[39m, \u001b[38;5;241m2\u001b[39m)) \u001b[38;5;241m==\u001b[39m \u001b[38;5;241m6\u001b[39m, \u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mShould be 6\u001b[39m\u001b[38;5;124m\"\u001b[39m\n",
+      "\u001b[0;31mAssertionError\u001b[0m: Should be 6"
+     ]
+    }
+   ],
+   "source": [
+    "test_sum_with_list()\n",
+    "test_sum_with_tuple() ## Just to make sure this works, I set the test up to fail above."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Running tests at the command-line\n",
+    "\n",
+    "We can run tests from the command line. Place the the two test functions (with the second test corrected) into a file called `test_sum.py`. To run it, you go into the terminal and type:\n",
+    "\n",
+    "        pytest test_sum.py\n",
+    "\n",
+    "This is short for\n",
+    "\n",
+    "        python -m pytest test_sum.py\n",
+    "\n",
+    "which will also work. \n",
+    "\n",
+    "_Note_: If you have set up `poetry` (I hope) you need to run within your poetry project, i.e. `poetry run pytest test_sum.py`\n",
+    "\n",
+    "Add the `-vv` flag to get an even fuller report:\n",
+    "\n",
+    "        pytest -vv test_sum.py\n",
+    "\n",
+    "If you have lots of tests in `test_sum.py` and want to run just one of them:\n",
+    "\n",
+    "        pytest -vv test_sum.py::test_sum_with_list\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Running `test_sum.py` in the terminal\n",
+    "\n",
+    "A passing test will be indicated by a `.` and failing one with an `F`. "
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "!poetry run pytest test_sum.py"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/test_sum_terminal_04.png)\n",
+    "\n",
+    "With the verbose flag, we get a list of test and an indication whether they passed:"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "!poetry run pytest -vv test_sum.py"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/test_sum_terminal_05.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Running unit tests in Pycharm\n",
+    "\n",
+    "If you’re using the PyCharm IDE, you can run `pytest` by running an invidual test, an entire python file with tests, or an entire `tests` directory:\n",
+    "\n",
+    "In the context menu, choose the `run` command for your file tests file. For example, choose _Run `pytest` for test_sum.test_sum_with_list_.\n",
+    "\n",
+    "This will execute `pytest` in a test window and give you the results within PyCharm ([here for more](https://www.jetbrains.com/help/pycharm/pytest.html)):\n",
+    "\n",
+    "![](images/pycharm_run_pytest.png)\n",
+    "    \n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## How to Structure a Simple Test\n",
+    "\n",
+    "Before we dive into writing tests, here is guideline on what to think about:\n",
+    "\n",
+    "**What** do you want to test?\n",
+    "Are you writing a **unit test** or an **integration test**?\n",
+    "\n",
+    "Then the structure of a test should loosely follow this workflow:\n",
+    "\n",
+    "1. Create your **inputs**\n",
+    "2. Execute the code being tested, capturing the **output**\n",
+    "3. **Compare** the **actual** output with an **expected** result"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "![](images/comparison_funny.jpg)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "![](images/unit_test_dilemma_funny.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Example: Own sum function called `total`\n",
+    "\n",
+    "Let's write our own sum function and test it. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def total(arg):\n",
+    "    total = 0\n",
+    "    for val in arg:\n",
+    "        total += val\n",
+    "    return total"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "6"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "total([1,2,3])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "6"
+      ]
+     },
+     "execution_count": 24,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "total((1,2,3))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "So, good news so far: our function works and can take in lists and tuples."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## What would you want to check for this `total` function using unit tests? "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "Here are few things we could check:\n",
+    "\n",
+    "- Can it sum a list, set, or dict?\n",
+    "- Can it sum a list of floats?\n",
+    "- Can it sum a list of integers?\n",
+    "- What happens if we provide a single integer rather than an iterable?\n",
+    "- What happens if we send along a bad value, like a string?\n",
+    "- Do we get the correct sum if we include negative values?\n",
+    "- What if one of the values is missing?  \n",
+    "..."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "![](images/cant_fail_unit_tests_meme.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Example: Write unit test for `total` testing functionality missing values"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "1. What would you expect our function to return if a `NaN` is included in the list to sum?\n",
+    "2. How can you write a test to check for that expected result?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_total_with_missing_values():\n",
+    "    actual = total([1, 2, np.nan])\n",
+    "    assert np.isnan(actual) # \"Should be NaN.\"\n",
+    "    \n",
+    "test_total_with_missing_values()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "So, the expected behavior for our function is to return `NaN` when an missing values is included. You could, of course, go back to the function and implement it differently. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "# Asserting with the `assert` statement\n",
+    "\n",
+    "In each test, we compare the `actual` output of function with an `expected` output. \n",
+    "\n",
+    "Basic python assertion with the `assert` statement (as we have used thus far) are a good way to get started. In addition, the `unittest` package comes with some methods to assert on the values, types, and existence of variables. Here are some of the most commonly used methods:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "center",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "| Method | Equivalent to  |\n",
+    "|---------| -------------- |\n",
+    ".assertEqual(a, b)\t| a == b\n",
+    ".assertTrue(x)\t| bool(x) is True\n",
+    ".assertFalse(x)\t| bool(x) is False\n",
+    ".assertIs(a, b)\t| a is b\n",
+    ".assertIsNone(x) |\tx is None\n",
+    ".assertIn(a, b)\t| a in b\n",
+    ".assertIsInstance(a, b)\t| isinstance(a, b)\n",
+    "\n",
+    "`.assertIs()`, `.assertIsNone()`, `.assertIn()`, and `.assertIsInstance()` all have opposite methods, named `.assertIsNot()`, and so forth."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Assertions about expected exceptions\n",
+    "\n",
+    "If our **code is meant to raise exceptions**, we can also test that these are raised correctly. In order to write assertions about raised exceptions, you can use `pytest.raises` as a context manager like this:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import pytest\n",
+    "with pytest.raises(ZeroDivisionError):\n",
+    "    1 / 0"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "If you code does not raise the _expected exception_ the test will fail:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [
+    {
+     "ename": "Failed",
+     "evalue": "DID NOT RAISE <class 'ZeroDivisionError'>",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mFailed\u001b[0m                                    Traceback (most recent call last)",
+      "Cell \u001b[0;32mIn [27], line 1\u001b[0m\n\u001b[0;32m----> 1\u001b[0m \u001b[38;5;28;01mwith\u001b[39;00m pytest\u001b[38;5;241m.\u001b[39mraises(\u001b[38;5;167;01mZeroDivisionError\u001b[39;00m):\n\u001b[1;32m      2\u001b[0m     \u001b[38;5;241m1\u001b[39m \u001b[38;5;241m/\u001b[39m \u001b[38;5;241m1\u001b[39m\n",
+      "    \u001b[0;31m[... skipping hidden 1 frame]\u001b[0m\n",
+      "File \u001b[0;32m~/Library/Caches/pypoetry/virtualenvs/mds-88Iw_1F4-py3.10/lib/python3.10/site-packages/_pytest/outcomes.py:196\u001b[0m, in \u001b[0;36mfail\u001b[0;34m(reason, pytrace, msg)\u001b[0m\n\u001b[1;32m    194\u001b[0m __tracebackhide__ \u001b[38;5;241m=\u001b[39m \u001b[38;5;28;01mTrue\u001b[39;00m\n\u001b[1;32m    195\u001b[0m reason \u001b[38;5;241m=\u001b[39m _resolve_msg_to_reason(\u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mfail\u001b[39m\u001b[38;5;124m\"\u001b[39m, reason, msg)\n\u001b[0;32m--> 196\u001b[0m \u001b[38;5;28;01mraise\u001b[39;00m Failed(msg\u001b[38;5;241m=\u001b[39mreason, pytrace\u001b[38;5;241m=\u001b[39mpytrace)\n",
+      "\u001b[0;31mFailed\u001b[0m: DID NOT RAISE <class 'ZeroDivisionError'>"
+     ]
+    }
+   ],
+   "source": [
+    "with pytest.raises(ZeroDivisionError):\n",
+    "    1 / 1"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "# `pytest` functionalities for improved testing\n",
+    "\n",
+    "![](images/python_testing_with_pytest.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Using context-sensitive comparisons\n",
+    "\n",
+    "`pytest` really starts to shine when we tap into its extended functionality. It does offer great support for providing context-sensitive information when it encounters comparisons."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_set_comparison():\n",
+    "    set1 = set(\"1308\")\n",
+    "    set2 = set(\"8035\")\n",
+    "    assert set1 == set2"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "When run with `pytest` (see file `test_with_context.py`), we obtain meaningful comparisons going well beyond the simple exception."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Using context-sensitive comparisons"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "!poetry run pytest test_with_context.py -vv"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "skip"
+    }
+   },
+   "source": [
+    "![](images/test_set_assertion_with_context.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "See here for many more examples: https://docs.pytest.org/en/7.1.x/example/reportingdemo.html"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Using context-sensitive comparisons\n",
+    "\n",
+    "Here is another example of testing long strings:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_eq_long_text():\n",
+    "        a = '1'*100 + 'a' + '2'*100\n",
+    "        b = '1'*100 + 'b' + '2'*100\n",
+    "        assert a == b"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "!poetry run pytest test_long_string.py"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "skip"
+    }
+   },
+   "source": [
+    "![](images/test_long_strings_comparison.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Using context-sensitive comparisons\n",
+    "\n",
+    "Here a last example with sets. In short, `pyest` makes finding bugs a lot easier on the eye."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_eq_set():\n",
+    "    assert set([0, 10, 11, 12]) == set([0, 20, 21])"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "!poetry run pytest test_eq_set.py -vv"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/test_difference_in_sets.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Testing multiple examples efficiently\n",
+    "\n",
+    "Let's go back to our palindrome checking function above. Suppose we want to check a bunch of examples. Writing separate tests would not be great because it would create lots of tests with repetitive code. Instead, we could use a simple loop:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def test_palindrome_detector_looping():\n",
+    "    examples = [\n",
+    "        ('deleveled', True),\n",
+    "        ('Malayalam', True),\n",
+    "        ('detartrated', True),\n",
+    "        ('a', True),\n",
+    "        ('repaper', True),\n",
+    "        ('Al lets Della call Ed Stella', True),\n",
+    "        ('Lisa Bonet ate no basil', True),\n",
+    "        ('Linguistics', False),\n",
+    "        ('Python', False),\n",
+    "        ('palindrome', False),\n",
+    "        ('an', False),\n",
+    "        ('re-paper', False)]\n",
+    "    for example, expected in examples:\n",
+    "        result = palindrome_detector(example)\n",
+    "        assert result == expected"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Not bad but with a major drawback: the test will stop (and the test report \"Failed\") as soon as it hits a case where the assert statement returns `False`. So we will not be able to see how we did on later tests, which might cause us to fail to see the full scope of the problems."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Testing multiple examples efficiently using `@pytest.mark.parametrize`\n",
+    "\n",
+    "We can test lots of test examples using `@pytest.mark.parametrize`.\n",
+    "\n",
+    "To do this better, `pytest` uses Python decorators. I have only mentioned them once or twice, but [here](https://realpython.com/primer-on-python-decorators/) is a good tutorial.   \n",
+    "_TL;DR_: Decorators wrap a function, modifying its behavior."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "@pytest.mark.parametrize(\"example, expected\", [\n",
+    "    ('deleveled', True),\n",
+    "    ('Malayalam', True),\n",
+    "    ('detartrated', True),\n",
+    "    ('a', True),\n",
+    "    ('repaper', True),\n",
+    "    ('Al lets Della call Ed Stella', True),\n",
+    "    ('Lisa Bonet ate no basil', True),\n",
+    "    ('Linguistics', False),\n",
+    "    ('Python', False),\n",
+    "    ('palindrome', False),\n",
+    "    ('an', False),\n",
+    "    ('re-paper', False)\n",
+    "])\n",
+    "def test_palindrome_detector_looping_(example, expected):\n",
+    "    result = palindrome_detector(example)\n",
+    "    assert result == expected"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "Here are couple of important things to notice:\n",
+    "    \n",
+    "- parametrize is spelled with only two `e`'s.\n",
+    "- The first argument to `@pytest.mark.parametrize` is a string that gives the arguments you'll be feeding to the test.\n",
+    "- The actual test needs to be given those same arguments, in the same order and with the same names, but as a list of arguments (as usual in Python).\n",
+    "- The second argument to `@pytest.mark.parametrize` is a list. Each member of the list has to have the same number of arguments as the test has.\n",
+    "- pytest reports each of the test cases as a separate test; each can in turn pass or fail on its own."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Testing multiple examples efficiently using `@pytest.mark.parametrize`"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "!poetry run pytest test_mark_parametrize.py -vv"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "![](images/test_mark_parametrize.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Shared resources using fixtures\n",
+    "\n",
+    "It is quite common to have **tests that share a single resource** (e.g. some API call, a data file etc. In that case, pytest allows us to share that resource using a `fixture` on your test functions.\n",
+    "\n",
+    "### Example:\n",
+    "Suppose you have written some functions that read in and process a corpus of tweets. For the testing of all these functions, you may rely on a local copy of a test corpus. It would be inefficient to read the corpus in for every test, and doing that would lead to code with a lot of redundancy.\n",
+    "\n",
+    "The `@pytest.fixture` decorator allows you to set up these resources once and use them across your tests.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Example: Use of `@pytest.fixture`"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import pytest\n",
+    "import pandas as pd\n",
+    "\n",
+    "@pytest.fixture\n",
+    "def toy_csv_df():\n",
+    "    link = \"https://web.stanford.edu/class/linguist278/data/toy-csv.csv\"\n",
+    "    df = pd.read_csv(link, index_col=0)\n",
+    "    return df\n",
+    "\n",
+    "def test_height_mean(toy_csv_df):\n",
+    "    expected = 68.9003\n",
+    "    result = round(toy_csv_df['Height'].mean(), 4)\n",
+    "    assert result == expected\n",
+    "\n",
+    "def test_occupation_counts(toy_csv_df):\n",
+    "    expected = pd.Series({'Psychologist': 7, 'Linguist': 3})\n",
+    "    result = toy_csv_df['Occupation'].value_counts()\n",
+    "    assert result.equals(expected)\n",
+    "\n",
+    "@pytest.mark.parametrize(\"subject, expected\", [\n",
+    "    (1, \"Psychologist\"),\n",
+    "    (5, \"Linguist\")\n",
+    "])\n",
+    "def test_subject_values(toy_csv_df, subject, expected):\n",
+    "    result = toy_csv_df.loc[subject]['Occupation']\n",
+    "    assert result == expected"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Most importantly, we can see that `toy_csv_df` is defined as a fixture and then given as an argument to any tests that need it. `pytest` will run `toy_csv_df` just once here."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Example: Use of `@pytest.fixture`\n"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "!poetry run pytest test_example_fixture.py -vv"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/test_fixture.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Side effects "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "When introducing functions we also learned about `side effects` which is altering other things in the environment, such as the attribute of a class, a file on the filesystem, or a value in a database that go beyond the `return` statement of a function. \n",
+    "\n",
+    "A pure function is a function which:\n",
+    "- Given the same input, will always return the same output.\n",
+    "- Doesn’t depend on and doesn’t modify the states of variables out of its scope.\n",
+    "- Relies on no side-causes — hidden inputs.\n",
+    "- Produces no side effects — hidden outputs.\n",
+    "\n",
+    "When testing, we need to **decide if the side effect is being tested** before including it in your list of assertions."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/functional-programmig-side-effects.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Single Responsibility Principle\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "If you find that the unit of code you want to test has lots of side effects, you might be breaking the **Single Responsibility Principle** which [states]((https://en.wikipedia.org/wiki/Single-responsibility_principle)) that _every module, class or function in a computer program should have responsibility over a single part of that program's functionality, which it should encapsulate._\n",
+    "\n",
+    "Breaking the Single Responsibility Principle means the piece of code is doing too many things and would be better off being refactored. Following the Single Responsibility Principle is a great way to design code that it is easy to write repeatable and simple unit tests for, and ultimately, reliable applications."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/single_responsibility_principle.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Isolating Behaviors in Your Code\n",
+    "\n",
+    "![](images/side_effect_bears.gif)\n",
+    "\n",
+    "Side effects make unit testing harder since, each time a test is run, it might give a different result, or even worse, one test could impact the state of the application and cause another test to fail!\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## How to deal with side effects?\n",
+    "\n",
+    "There are some simple techniques you can use to test parts of your application that have many side effects:\n",
+    "\n",
+    "- **Refactor your code** to follow the _Single Responsibility Principle_\n",
+    "- **Mock out** any method or function calls to remove side effects (see [`pytest-mock` package](https://pypi.org/project/pytest-mock/) and this tutorial on [command line app testing](https://realpython.com/python-cli-testing/#mocks))\n",
+    "- Use **integration testing** instead of unit testing for this piece of the application"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "# Mocking in Python\n",
+    "\n",
+    "![](images/mock_banner.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Mocking out parts of a function"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "A **mock** replaces a function with a dummy you can program to do whatever you choose.\n",
+    "\n",
+    "In Python, to mock, be it functions, objects or classes, you will mostly use the `Mock` class which comes from the built-in `unittest.mock` module.\n",
+    "\n",
+    "In addition, we will rely on `pytest-mock` to add a mocker fixture to allow these mocking capabilities in `pytest`.\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/mocking_fish.jpg)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Mocking a simple function\n",
+    "\n",
+    "Say, we have a function `get_operating_system` that tells us whether we are using Windows or Linux and would like to write a unit test for it."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# application.py \n",
+    "from time import sleep  \n",
+    "def is_windows():    \n",
+    "    # This sleep could be some complex operation instead\n",
+    "    sleep(5)  \n",
+    "    return True\n",
+    "def get_operating_system():    \n",
+    "    return 'Windows' if is_windows() else 'Linux'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "This function uses another function `is_windows` to check if the current system is Windows or not. \n",
+    "\n",
+    "For at least two reasons, we should mock out `is_windows` in our test of `get_operating_system`.\n",
+    "\n",
+    "**1. Speed**  \n",
+    "Assume that this `is_windows` function is quite complex taking several seconds to run. We can simulate this slow function by making the program sleep for 5 seconds every time it is called.\n",
+    "\n",
+    "**2. OS Interoperability**  \n",
+    "Clearly, `is_windows` would give us different answers depending on the operating system. But given that we run the test on one specific operating system, our test for `get_operating_system` would only ever consider one specific part of the code."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Testing `get_operating` system with `pytest`\n",
+    "\n",
+    "A simple `pytest` module would be:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# test_application.py\n",
+    "from application import get_operating_system\n",
+    "\n",
+    "def test_get_operating_system():\n",
+    "    assert get_operating_system() == 'Windows'"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "!poetry run pytest test_get_operating_system.py -vv"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "Since, `get_operating_system()` calls a slower function `is_windows`, the test is going to be slow. This can be seen below in the output of running pytest which took 5.07 seconds.\n",
+    "\n",
+    "![](images/test_get_operating_system.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Mocking out \n",
+    "\n",
+    "Unit tests should be fast and operating system independent. So, let's mock out the `is_windows` function. This time we simply determine that the `is_windows` function will return `True` without taking those five long seconds. We can patch it as follows:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# 'mocker' fixture provided by pytest-mock\n",
+    "def test_get_operating_system(mocker):  \n",
+    "    # Mock the slow function and return True always\n",
+    "    mocker.patch('application.is_windows', return_value=True) \n",
+    "    assert get_operating_system() == 'Windows'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "And indeed, now it runs quickly and we can set whatever value we want for `is_windows` independent of our operating system."
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "!poetry run pytest -vv test_get_operating_system_with_mock.py"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/test_get_operating_system_with_mock.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Real unit tests with Mock\n",
+    "\n",
+    "When we do the patch, we create a new mocked function that gets called, bypassing the original function. That way, we can test the `get_operating_system` function independent of the `is_windows` function - a true unit test.\n",
+    "\n",
+    "![](images/mock_is_windows.png)\n",
+    "\n",
+    "For the full example, see this mock tutorial here (part [1](https://medium.com/analytics-vidhya/mocking-in-python-with-pytest-mock-part-i-6203c8ad3606) and [2](https://medium.com/@durgaswaroop/writing-better-tests-in-python-with-pytest-mock-part-2-92b828e1453c))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "slide"
+    }
+   },
+   "source": [
+    "# Writing integration tests"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "![](images/testing_banner_02.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Unit testing vs. Integration testing\n",
+    "\n",
+    "So far we mainly talked about unit testing. Unit testing is a great way to build predictable and stable code. But at the end of the day, your application needs to work when it starts!\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "**Integration testing** is the **testing of multiple components of the application** to check that they **work together**. \n",
+    "\n",
+    "Integration testing might require acting like a consumer or user of the application by:\n",
+    "\n",
+    "- Calling an HTTP REST API\n",
+    "- Calling a Python API\n",
+    "- Calling a web service\n",
+    "- Running a command line"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "cell_style": "split",
+    "slideshow": {
+     "slide_type": "fragment"
+    }
+   },
+   "source": [
+    "![](images/unit_vs_integration_test.gif)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Testing pyramid\n",
+    "\n",
+    "![](images/testing_pyramid.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "subslide"
+    }
+   },
+   "source": [
+    "## Project Organization\n",
+    "\n",
+    "Once we combine our code into a package, it is best to **separate tests out from the actual source code**. \n",
+    "\n",
+    "Similarly, it is often useful to separate unit test and integration test to keep an overview.\n",
+    "\n",
+    "![](images/project_structure_tests.png)"
+   ]
+  }
+ ],
+ "metadata": {
+  "celltoolbar": "Slideshow",
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.6"
+  },
+  "varInspector": {
+   "cols": {
+    "lenName": 16,
+    "lenType": 16,
+    "lenVar": 40
+   },
+   "kernels_config": {
+    "python": {
+     "delete_cmd_postfix": "",
+     "delete_cmd_prefix": "del ",
+     "library": "var_list.py",
+     "varRefreshCmd": "print(var_dic_list())"
+    },
+    "r": {
+     "delete_cmd_postfix": ") ",
+     "delete_cmd_prefix": "rm(",
+     "library": "var_list.r",
+     "varRefreshCmd": "cat(var_dic_list()) "
+    }
+   },
+   "types_to_exclude": [
+    "module",
+    "function",
+    "builtin_function_or_method",
+    "instance",
+    "_Feature"
+   ],
+   "window_display": false
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
